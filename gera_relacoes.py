@@ -34,12 +34,15 @@ class Friendship:
 
     person_id: int
     friend_id: int
+    person_name: str
+    friend_name: str
 
 
 def parseArgs() -> Optional[Args]:
     """Lê e interpreta os argumentos de linha de comando"""
     argv = sys.argv
     argc = len(argv)
+    print(argv)
     if argc != 4:
         return
     if argv[1] != "postgres" and argv[1] != "neo4j":
@@ -69,9 +72,9 @@ def createFriendships(args: Args, personList: list[Person]) -> list[Friendship]:
                 continue
             # Aleatoriza quem é amigo de quem, para permitir diversidade na db
             if random() >= 0.5:
-                friendships.append(Friendship(person.id, friend.id))
+                friendships.append(Friendship(person.id, friend.id, person.name, friend.name))
             else:
-                friendships.append(Friendship(friend.id, person.id))
+                friendships.append(Friendship(friend.id, person.id, friend.name, person.name))
     return friendships
 
 
@@ -93,6 +96,23 @@ def printInsertSQL(personList: list[Person], friendshipList: list[Friendship]) -
     print(f"INSERT INTO FRIENDSHIP(PersonId, FriendId)\nVALUES\n\t{friendshipString};")
 
 
+def printInsertNeo(personList: list[Person], friendshipList: list[Friendship]) -> None:
+    personString = ",\n\t".join(
+        [f"({person.name}:PERSON{{name:'{person.name}'}})" for person in personList]
+    )
+    print(f"CREATE\n\t{personString}")
+    print()
+    friendshipString = ",\n\t".join(
+        [
+            f"({friendship.person_name})-[:FRIENDSHIP]->({friendship.friend_name})"
+            for friendship in friendshipList
+        ]
+    )
+    print(f"CREATE\n\t{friendshipString}")
+
+    
+
+
 # --- Main
 if __name__ == "__main__":
     args = parseArgs()
@@ -105,3 +125,5 @@ if __name__ == "__main__":
     print(f"Número de amizades geradas: {len(friendships)}", file=sys.stderr)
     if args.output_type == "postgres":
         printInsertSQL(personList, friendships)
+    elif args.output_type == "neo4j":
+        printInsertNeo(personList, friendships)
