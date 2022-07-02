@@ -42,7 +42,6 @@ def parseArgs() -> Optional[Args]:
     """Lê e interpreta os argumentos de linha de comando"""
     argv = sys.argv
     argc = len(argv)
-    print(argv)
     if argc != 4:
         return
     if argv[1] != "postgres" and argv[1] != "neo4j":
