@@ -1,0 +1,2 @@
+match (n)-->(m{name: 'Bob'})
+return n
