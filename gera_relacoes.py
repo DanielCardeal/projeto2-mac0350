@@ -5,13 +5,14 @@ from random import randint, random
 from typing import Optional
 
 NAMES_FILE = "./names.txt"
+OUTPUT_NEO4J = "./generated_neo4j_dml.cql"
+OUTPUT_POSTGRES = "./generated_postgres_dml.sql"
 
 
 @dataclass
 class Args:
     """Argumentos de linha de comando"""
 
-    output_type: str
     num_people: int
     friendship_chance: float
 
@@ -42,14 +43,11 @@ def parseArgs() -> Optional[Args]:
     """Lê e interpreta os argumentos de linha de comando"""
     argv = sys.argv
     argc = len(argv)
-    if argc != 4:
+    if argc != 3:
         return
-    if argv[1] != "postgres" and argv[1] != "neo4j":
-        return
-    output = argv[1]
-    num_people = int(argv[2])
-    relation_percent = float(argv[3])
-    return Args(output, num_people, relation_percent)
+    num_people = int(argv[1])
+    relation_percent = float(argv[2])
+    return Args(num_people, relation_percent)
 
 
 def getPersonList(args: Args) -> list[Person]:
@@ -83,35 +81,39 @@ def createFriendships(args: Args, personList: list[Person]) -> list[Friendship]:
 
 def printInsertSQL(personList: list[Person], friendshipList: list[Friendship]) -> None:
     """Cria o SQL de insert para as pessoas e amizades"""
-    # SQL para PERSON
     personString = ",\n\t".join(
         [f"({person.id:12d}, '{person.name:s}')" for person in personList]
     )
-    print(f"INSERT INTO PERSON(ID, Name)\nVALUES\n\t{personString};")
-    print()
-    # SQL para FRIENDSHIP
     friendshipString = ",\n\t".join(
         [
             f"({friendship.person_id:12d}, {friendship.friend_id:12d})"
             for friendship in friendshipList
         ]
     )
-    print(f"INSERT INTO FRIENDSHIP(PersonId, FriendId)\nVALUES\n\t{friendshipString};")
+    with open(OUTPUT_POSTGRES, "w") as f:
+        f.write(f"INSERT INTO PERSON(ID, Name)\nVALUES\n\t{personString};")
+        f.write("\n\n")
+        f.write(
+            f"INSERT INTO FRIENDSHIP(PersonId, FriendId)\nVALUES\n\t{friendshipString};\n"
+        )
+        f.flush()
 
 
 def printInsertNeo(personList: list[Person], friendshipList: list[Friendship]) -> None:
     personString = ",\n\t".join(
         [f"({person.name}:PERSON{{name:'{person.name}'}})" for person in personList]
     )
-    print(f"CREATE\n\t{personString}")
-    print()
     friendshipString = ",\n\t".join(
         [
             f"({friendship.person_name})-[:FRIENDSHIP]->({friendship.friend_name})"
             for friendship in friendshipList
         ]
     )
-    print(f"CREATE\n\t{friendshipString}")
+    with open(OUTPUT_NEO4J, "w") as f:
+        f.write(f"CREATE\n\t{personString}")
+        f.write("\n\n")
+        f.write(f"CREATE\n\t{friendshipString}\n")
+        f.flush()
 
 
 # --- Main
@@ -124,7 +126,5 @@ if __name__ == "__main__":
     friendships = createFriendships(args, personList)
     # OUTPUT
     print(f"Número de amizades geradas: {len(friendships)}", file=sys.stderr)
-    if args.output_type == "postgres":
-        printInsertSQL(personList, friendships)
-    elif args.output_type == "neo4j":
-        printInsertNeo(personList, friendships)
+    printInsertSQL(personList, friendships)
+    printInsertNeo(personList, friendships)
