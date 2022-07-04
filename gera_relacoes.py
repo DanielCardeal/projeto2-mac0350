@@ -71,9 +71,13 @@ def createFriendships(args: Args, personList: list[Person]) -> list[Friendship]:
                 continue
             # Aleatoriza quem é amigo de quem, para permitir diversidade na db
             if random() >= 0.5:
-                friendships.append(Friendship(person.id, friend.id, person.name, friend.name))
+                friendships.append(
+                    Friendship(person.id, friend.id, person.name, friend.name)
+                )
             else:
-                friendships.append(Friendship(friend.id, person.id, friend.name, person.name))
+                friendships.append(
+                    Friendship(friend.id, person.id, friend.name, person.name)
+                )
     return friendships
 
 
@@ -108,8 +112,6 @@ def printInsertNeo(personList: list[Person], friendshipList: list[Friendship]) -
         ]
     )
     print(f"CREATE\n\t{friendshipString}")
-
-    
 
 
 # --- Main
