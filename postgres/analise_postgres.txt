@@ -1,0 +1,24 @@
+                                                               QUERY PLAN
+----------------------------------------------------------------------------------------------------------------------------------------
+ Hash Join  (cost=130.17..245.39 rows=147 width=10) (actual time=0.839..1.439 rows=158 loops=1)
+   Hash Cond: (f_am.friendid = amigo_am.id)
+   ->  Hash Join  (cost=115.92..230.75 rows=147 width=4) (actual time=0.744..1.324 rows=158 loops=1)
+         Hash Cond: (f_am.personid = f_al.friendid)
+         ->  Seq Scan on friendship f_am  (cost=0.00..90.08 rows=6208 width=8) (actual time=0.002..0.248 rows=6208 loops=1)
+         ->  Hash  (cost=115.77..115.77 rows=12 width=4) (actual time=0.723..0.724 rows=13 loops=1)
+               Buckets: 1024  Batches: 1  Memory Usage: 9kB
+               ->  Hash Join  (cost=9.26..115.77 rows=12 width=4) (actual time=0.050..0.716 rows=13 loops=1)
+                     Hash Cond: (f_al.personid = alice.id)
+                     ->  Seq Scan on friendship f_al  (cost=0.00..90.08 rows=6208 width=8) (actual time=0.003..0.275 rows=6208 loops=1)
+                     ->  Hash  (cost=9.25..9.25 rows=1 width=4) (actual time=0.037..0.038 rows=1 loops=1)
+                           Buckets: 1024  Batches: 1  Memory Usage: 9kB
+                           ->  Seq Scan on person alice  (cost=0.00..9.25 rows=1 width=4) (actual time=0.005..0.032 rows=1 loops=1)
+                                 Filter: ((name)::text = 'Alice'::text)
+                                 Rows Removed by Filter: 499
+   ->  Hash  (cost=8.00..8.00 rows=500 width=10) (actual time=0.089..0.089 rows=500 loops=1)
+         Buckets: 1024  Batches: 1  Memory Usage: 29kB
+         ->  Seq Scan on person amigo_am  (cost=0.00..8.00 rows=500 width=10) (actual time=0.005..0.027 rows=500 loops=1)
+ Planning Time: 0.333 ms
+ Execution Time: 1.507 ms
+(20 rows)
+
